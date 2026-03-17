@@ -10,7 +10,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 2) Map 4KB of anonymous guest memory.
     let mem_size: u64 = 0x1000;
     let guest_addr = GuestAddress(0);
-    let mem = GuestMemoryMmap::from_ranges(&[(guest_addr, mem_size as usize)])?;
+    let mem: GuestMemoryMmap<()> = GuestMemoryMmap::from_ranges(&[(guest_addr, mem_size as usize)])?;
     let host_addr = mem.get_host_address(guest_addr)? as u64;
 
     let region = kvm_userspace_memory_region {
@@ -56,3 +56,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
