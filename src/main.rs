@@ -25,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 3) Create a vCPU and inject simple x86 real-mode code:
     //    mov ax, 0x42; hlt
     // Note: With only 4KB mapped, we stay in real mode. This sets AX (lower 16 bits of RAX).
-    let vcpu = vm.create_vcpu(0)?;
+    let mut vcpu = vm.create_vcpu(0)?;
     let code: [u8; 4] = [0xB8, 0x42, 0x00, 0xF4];
     mem.write(&code, guest_addr)?;
 
@@ -56,4 +56,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
 
