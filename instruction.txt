@@ -1,0 +1,65 @@
+这是一个非常棒的起点。利用 Vibe Coding 实现这一目标，关键在于**“拆解（Decomposition）”**。你不能直接对 AI 说“给我写一个 rust-vmm”，因为它太庞大了；你需要指导它利用 rust-vmm 的核心 Crate，像搭积木一样拼出一个**极简 VMM（Mini-VMM）**。
+
+[cite_start]为了完成你的科研实验，你的目标是构建一个能通过 KVM 运行简单的指令（如 `MOV` 或 `HLT`）的程序，这不仅能让你理解虚拟机运行数据（如寄存器、内存 [cite: 5, 15]），还能为后续的“指令裁剪”实验打下基础。
+
+以下是指导 AI 的具体步骤和提示词（Prompts）：
+
+---
+
+## 步骤一：环境初始化与依赖定义
+首先让 AI 帮你搭建 Rust 工程环境，并引入 rust-vmm 最核心的三个“积木”。
+
+**Prompt 指导语：**
+> [cite_start]“我正在 Ubuntu 20.04 上开发一个基于 Rust 的极简 VMM。请帮我初始化一个 Cargo 项目，并在 `Cargo.toml` 中引入 `rust-vmm` 生态中的核心库：`kvm-ioctls`（处理 KVM 交互）、`vm-memory`（管理虚拟机内存 [cite: 14]）和 `kvm-bindings`。请确保版本兼容性。”
+
+---
+
+## 步骤二：编写核心运行循环（The KVM Loop）
+[cite_start]这是虚拟机的“心脏”，负责在硬件加速路径下运行 Guest 指令 [cite: 74]。你需要 AI 帮你实现：创建 VM、创建 vCPU、设置内存映射。
+
+**Prompt 指导语：**
+> “请参照 `rust-vmm` 的典型模式，在 `main.rs` 中实现以下逻辑：
+> [cite_start]1. 打开 `/dev/kvm` 并创建一个虚拟机（VM）实例 [cite: 4]。
+> [cite_start]2. 使用 `vm-memory` 库映射一段 4KB 的匿名内存作为虚拟机的物理内存 [cite: 15]。
+> [cite_start]3. 创建一个 vCPU 并在其寄存器中注入一段简单的 x86 机器码（例如：将 0x42 移动到 RAX 寄存器，然后执行 HLT）[cite: 9]。
+> 4. 编写一个 `loop` 循环调用 `vcpu.run()`，并能够捕获 `VcpuExit::Hlt` 事件。”
+
+---
+
+## 步骤三：实现你科研需要的“数据观测点”
+[cite_start]你的课题关注**数据正确性**，特别是 Guest 不可见的寄存器状态 [cite: 6, 22]。你可以让 AI 在代码中加入“审计”逻辑。
+
+**Prompt 指导语：**
+> “在上面的 KVM 循环中，我想增加一个‘数据一致性校验’功能。请帮我实现：
+> [cite_start]当 vCPU 退出（VMExit）时，使用 `vcpu.get_regs()` 获取当前的寄存器状态 [cite: 9]。
+> [cite_start]按照我提供的科研思路：检查 RAX 之外的寄存器（如 RBX, RCX）是否被非预期修改 [cite: 127]。如果发生非预期修改，打印一条‘数据污染’告警。”
+
+---
+
+## 步骤四：处理 Guest 内存（数据运行区）
+[cite_start]为了验证内存资源相关的异常 [cite: 14, 81]，你需要 AI 帮你理清宿主机如何访问 Guest 内存。
+
+**Prompt 指导语：**
+> [cite_start]“请展示如何使用 `vm-memory` 的 `GuestMemoryMmap` 来读取虚拟机内存中的特定偏移量。我需要在宿主机侧验证虚拟机写入的数据是否正确 [cite: 22][cite_start]，以防出现内存位翻转等硬件风险 [cite: 81]。”
+
+---
+
+## 核心架构概览（供你对照 AI 生成的内容）
+
+
+
+| 模块 | 对应 rust-vmm 组件 | 你的科研用途 |
+| :--- | :--- | :--- |
+[cite_start]| **内存映射** | `vm-memory` | 验证内存数据正确性 [cite: 15, 81] |
+| **CPU 状态管理** | `kvm-ioctls` | [cite_start]监控寄存器（Guest 可见/不可见） [cite: 9, 10] |
+| **指令模拟/拦截** | `kvm-bindings` | [cite_start]实验“指令裁剪”与行为约束 [cite: 112, 126] |
+
+---
+
+## 给你的科研建议
+
+1.  **先跑通“空转”**：先让 AI 帮你写出一个能让 vCPU 停在 `HLT` 指令的程序。
+2.  [cite_start]**手动注入异常**：代码跑通后，你可以尝试手动在代码里修改寄存器值，模拟文档中提到的“Hypervisor 逻辑错误” [cite: 88]，看你的校验逻辑能否抓到。
+3.  [cite_start]**理解语义隔离**：记住 Hypervisor 只能看到寄存器里的 0 和 1，它并不真正“理解” Guest OS 的意图 [cite: 84]，这就是为什么你需要通过 AI 建立一套自动化的验证规则。
+
+**你想让我针对上述某一步骤，直接为你生成一段可以直接在本地运行的 Rust 代码原型吗？**
