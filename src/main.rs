@@ -9,7 +9,7 @@ const SEED_PATH: &str = "/home/tonywei/hhy/util/specVMM/seed.iso";
 
 fn main() {
     let kernel_cfg = format!(
-        "path={},cmdline=\"console=ttyS0 root=/dev/vda1 rw rootwait init=/bin/bash panic=1\"",
+        "path={},cmdline=console=ttyS0 root=/dev/vda1 rw rootwait rootfstype=ext4 init=/bin/bash panic=1",
         KERNEL_PATH
     );
     let block_cfg = format!("path={}", DISK_PATH);
@@ -27,3 +27,4 @@ fn main() {
         .expect("Failed to add seed device");
     vmm.run().expect("VMM run failed");
 }
+
