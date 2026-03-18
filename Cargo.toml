@@ -6,4 +6,6 @@ edition = "2021"
 [dependencies]
 kvm-ioctls = "0.24"
 kvm-bindings = "0.14"
-vm-memory = { version = "0.18", features = ["backend-mmap"] }
+vm-memory = { version = "0.16", features = ["backend-mmap"] }
+linux-loader = "0.13"
+linux-boot-params = "0.2"
