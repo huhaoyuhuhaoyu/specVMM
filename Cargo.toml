@@ -4,5 +4,4 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-vmm = { path = "_vmm_reference/src/vmm" }
-api = { path = "_vmm_reference/src/api" }
+vmm = { path = "vendor/vmm-reference/src/vmm" }
