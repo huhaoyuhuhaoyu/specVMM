@@ -7,6 +7,7 @@ edition = "2021"
 vmm = { path = "vendor/vmm-reference/src/vmm" }
 
 [patch.crates-io]
+event-manager = { path = "third_party/event-manager" }
 linux-loader = { path = "vendor/linux-loader" }
 kvm-ioctls = { path = "vendor/kvm-ioctls" }
 vm-memory = { path = "vendor/vm-memory" }
