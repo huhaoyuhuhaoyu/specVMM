@@ -1298,7 +1298,7 @@ impl VcpuFd {
                     let system_event = unsafe { &mut run.__bindgen_anon_1.system_event };
                     Ok(VcpuExit::SystemEvent(
                         system_event.type_,
-                        system_event.__bindgen_anon_1.flags,
+                        system_event.flags,
                     ))
                 }
                 KVM_EXIT_S390_STSI => Ok(VcpuExit::S390Stsi),
@@ -2256,3 +2256,4 @@ mod tests {
         }
     }
 }
+

@@ -9,3 +9,4 @@ vmm = { path = "vendor/vmm-reference/src/vmm" }
 [patch.crates-io]
 linux-loader = { git = "https://github.com/rust-vmm/linux-loader.git", rev = "9a9f071" }
 kvm-ioctls = { path = "vendor/kvm-ioctls" }
+vm-memory = { git = "https://github.com/rust-vmm/vm-memory.git", tag = "v0.7.0" }
