@@ -1,168 +1,29 @@
-use kvm_bindings::{kvm_segment, kvm_userspace_memory_region};
-use kvm_ioctls::{Kvm, VcpuExit};
-use linux_boot_params::{BootE820Entry, BootParams, E820Type};
-use linux_loader::loader::bzimage::BzImage;
-use linux_loader::loader::{load_cmdline, Cmdline, KernelLoader};
-use std::fs::File;
-use std::io::{self, Write};
-use vm_memory::{Bytes, GuestAddress, GuestMemory, GuestMemoryMmap};
+use std::convert::TryFrom;
+use std::path::PathBuf;
+
+use vmm::{Vmm, VMMConfig};
 
 const KERNEL_PATH: &str = "/home/tonywei/hhy/util/specVMM/linux/arch/x86/boot/bzImage";
 const DISK_PATH: &str = "/home/tonywei/hhy/util/specVMM/disk.raw";
 const SEED_PATH: &str = "/home/tonywei/hhy/util/specVMM/seed.iso";
 
-const MEM_SIZE: u64 = 512 << 20; // 512 MiB
-const KERNEL_LOAD_ADDR: u64 = 0x100000;
-const BOOT_PARAMS_ADDR: u64 = 0x7000;
-const CMDLINE_ADDR: u64 = 0x20000;
+fn main() {
+    let kernel_cfg = format!(
+        "path={},cmdline=\"console=ttyS0 root=/dev/vda1 rw rootwait init=/bin/bash panic=1\"",
+        KERNEL_PATH
+    );
+    let block_cfg = format!("path={}", DISK_PATH);
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // 1) Open /dev/kvm and create a VM.
-    let kvm = Kvm::new()?;
-    let vm = kvm.create_vm()?;
+    let vmm_config = VMMConfig::builder()
+        .memory_config(Some("size_mib=1024"))
+        .vcpu_config(Some("num=1"))
+        .kernel_config(Some(kernel_cfg.as_str()))
+        .block_config(Some(block_cfg.as_str()))
+        .build()
+        .expect("Failed to build VMM config");
 
-    // 2) Map guest memory.
-    let guest_addr = GuestAddress(0);
-    let mem: GuestMemoryMmap<()> =
-        GuestMemoryMmap::from_ranges(&[(guest_addr, MEM_SIZE as usize)])?;
-    let host_addr = mem.get_host_address(guest_addr)? as u64;
-
-    let region = kvm_userspace_memory_region {
-        slot: 0,
-        guest_phys_addr: guest_addr.0,
-        memory_size: MEM_SIZE,
-        userspace_addr: host_addr,
-        flags: 0,
-    };
-    unsafe { vm.set_user_memory_region(region)? };
-
-    // 3) Load bzImage kernel.
-    let mut kernel_file = File::open(KERNEL_PATH)?;
-    let mut boot_params: BootParams = unsafe { std::mem::zeroed() };
-
-    // Basic E820 memory map (1 RAM region covering all RAM).
-    boot_params.e820_entries = 1;
-    boot_params.e820_table[0] = BootE820Entry {
-        addr: 0,
-        size: MEM_SIZE,
-        typ: E820Type::Ram,
-    };
-
-    // Load kernel into guest memory.
-    BzImage::load(
-        &mem,
-        Some(GuestAddress(KERNEL_LOAD_ADDR)),
-        &mut kernel_file,
-        Some(GuestAddress(KERNEL_LOAD_ADDR)),
-    )?;
-
-    // Kernel command line.
-    let mut cmdline = Cmdline::new(4096)?;
-    cmdline.insert_str("console=ttyS0 root=/dev/vda1 rw i8042.nokbd reboot=t panic=1")?;
-    load_cmdline(&mem, GuestAddress(CMDLINE_ADDR), &cmdline)?;
-    boot_params.hdr.cmd_line_ptr = CMDLINE_ADDR as u32;
-    let cmdline_cstr = cmdline.as_cstring()?;
-    boot_params.hdr.cmdline_size = cmdline_cstr.to_bytes_with_nul().len() as u32;
-
-    // Write boot params (zero page).
-    let boot_params_bytes = unsafe {
-        std::slice::from_raw_parts(
-            (&boot_params as *const BootParams) as *const u8,
-            std::mem::size_of::<BootParams>(),
-        )
-    };
-    mem.write_slice(boot_params_bytes, GuestAddress(BOOT_PARAMS_ADDR))?;
-
-    // 4) Create a vCPU and configure protected mode segments.
-    let mut vcpu = vm.create_vcpu(0)?;
-    let mut sregs = vcpu.get_sregs()?;
-
-    // Flat segments for 32-bit protected mode.
-    sregs.gdt.base = 0;
-    sregs.gdt.limit = 0;
-
-    sregs.cs = make_segment(0x8, 0xb);
-    sregs.ds = make_segment(0x10, 0x3);
-    sregs.es = make_segment(0x10, 0x3);
-    sregs.fs = make_segment(0x10, 0x3);
-    sregs.gs = make_segment(0x10, 0x3);
-    sregs.ss = make_segment(0x10, 0x3);
-
-    sregs.cr0 |= 0x1; // PE: protected mode
-    vcpu.set_sregs(&sregs)?;
-
-    let mut regs = vcpu.get_regs()?;
-    regs.rip = KERNEL_LOAD_ADDR;
-    regs.rsi = BOOT_PARAMS_ADDR;
-    regs.rflags = 0x2;
-    regs.rsp = 0x8000;
-    vcpu.set_regs(&regs)?;
-
-    // 5) Run loop and handle serial I/O + HLT.
-    loop {
-        match vcpu.run()? {
-            VcpuExit::Hlt => {
-                println!("VcpuExit::Hlt");
-                break;
-            }
-            VcpuExit::IoOut(port, data) => {
-                handle_io_out(port, data)?;
-            }
-            VcpuExit::IoIn(port, data) => {
-                handle_io_in(port, data);
-            }
-            exit_reason => {
-                return Err(format!("Unexpected vCPU exit: {:?}", exit_reason).into());
-            }
-        }
-    }
-
-    Ok(())
-}
-
-fn make_segment(selector: u16, type_: u8) -> kvm_segment {
-    kvm_segment {
-        base: 0,
-        limit: 0xffff_ffff,
-        selector,
-        type_,
-        present: 1,
-        dpl: 0,
-        db: 1,
-        s: 1,
-        l: 0,
-        g: 1,
-        avl: 0,
-        unusable: 0,
-        padding: 0,
-    }
-}
-
-fn handle_io_out(port: u16, data: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
-    if port == 0x3f8 && data.len() == 1 {
-        print!("{}", data[0] as char);
-        io::stdout().flush()?;
-        return Ok(());
-    }
-
-    if (0x3f8..=0x3ff).contains(&port) {
-        return Ok(());
-    }
-
-    Err(format!("Unexpected IO out: port=0x{:x}", port).into())
-}
-
-fn handle_io_in(port: u16, data: &mut [u8]) {
-    if data.is_empty() {
-        return;
-    }
-
-    match port {
-        // THR/RBR
-        0x3f8 => data[0] = 0,
-        // LSR: THR empty + TEMT
-        0x3fd => data[0] = 0x60,
-        _ if (0x3f8..=0x3ff).contains(&port) => data[0] = 0,
-        _ => data[0] = 0,
-    }
+    let mut vmm = Vmm::try_from(vmm_config).expect("Failed to create VMM from config");
+    vmm.add_block_device_extra(PathBuf::from(SEED_PATH), true)
+        .expect("Failed to add seed device");
+    vmm.run().expect("VMM run failed");
 }

@@ -4,8 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-kvm-ioctls = "0.24"
-kvm-bindings = "0.14"
-vm-memory = { version = "0.17.1", features = ["backend-mmap"] }
-linux-loader = { version = "0.13.2", features = ["bzimage"] }
-linux-boot-params = "0.17.1"
+vmm = { path = "_vmm_reference/src/vmm" }
+api = { path = "_vmm_reference/src/api" }
