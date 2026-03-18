@@ -49,17 +49,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // Load kernel into guest memory.
-    BzImage::load(&mem, Some(GuestAddress(KERNEL_LOAD_ADDR)), &mut kernel_file, Some(GuestAddress(KERNEL_LOAD_ADDR)))?;
+    BzImage::load(
+        &mem,
+        Some(GuestAddress(KERNEL_LOAD_ADDR)),
+        &mut kernel_file,
+        Some(GuestAddress(KERNEL_LOAD_ADDR)),
+    )?;
 
     // Kernel command line.
     let mut cmdline = Cmdline::new(4096)?;
     cmdline.insert_str("console=ttyS0 root=/dev/vda1 rw i8042.nokbd reboot=t panic=1")?;
     load_cmdline(&mem, GuestAddress(CMDLINE_ADDR), &cmdline)?;
     boot_params.hdr.cmd_line_ptr = CMDLINE_ADDR as u32;
-    let cmdline_cstr = cmdline.as_cstring()?;`r`n    boot_params.hdr.cmdline_size = cmdline_cstr.to_bytes_with_nul().len() as u32;
+    let cmdline_cstr = cmdline.as_cstring()?;
+    boot_params.hdr.cmdline_size = cmdline_cstr.to_bytes_with_nul().len() as u32;
 
     // Write boot params (zero page).
-    let boot_params_bytes = unsafe {`r`n        std::slice::from_raw_parts(`r`n            (&boot_params as *const BootParams) as *const u8,`r`n            std::mem::size_of::<BootParams>(),`r`n        )`r`n    };`r`n    mem.write_slice(boot_params_bytes, GuestAddress(BOOT_PARAMS_ADDR))?;
+    let boot_params_bytes = unsafe {
+        std::slice::from_raw_parts(
+            (&boot_params as *const BootParams) as *const u8,
+            std::mem::size_of::<BootParams>(),
+        )
+    };
+    mem.write_slice(boot_params_bytes, GuestAddress(BOOT_PARAMS_ADDR))?;
 
     // 4) Create a vCPU and configure protected mode segments.
     let mut vcpu = vm.create_vcpu(0)?;
@@ -154,4 +166,3 @@ fn handle_io_in(port: u16, data: &mut [u8]) {
         _ => data[0] = 0,
     }
 }
-
