@@ -4,15 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-vmm = { path = "vendor/vmm-reference/src/vmm" }
+vmm = { path = "third_party/vmm-reference/src/vmm" }
 
 [patch.crates-io]
 event-manager = { path = "third_party/event-manager" }
 linux-loader = { path = "vendor/linux-loader" }
-kvm-ioctls = { path = "vendor/kvm-ioctls" }
-vm-memory = { path = "vendor/vm-memory" }
+kvm-ioctls = { path = "third_party/kvm-ioctls" }
+vm-memory = { path = "third_party/vm-memory" }
 vmm-sys-util = { path = "vendor/vmm-sys-util" }
 
 [patch."https://github.com/rust-vmm/vm-virtio.git"]
-vm-memory = { path = "vendor/vm-memory" }
+vm-memory = { path = "third_party/vm-memory" }
 vmm-sys-util = { path = "vendor/vmm-sys-util" }
