@@ -38,20 +38,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 3) Load bzImage kernel.
     let mut kernel_file = File::open(KERNEL_PATH)?;
-    let mut boot_params = BootParams::default();
+    let mut boot_params: BootParams = unsafe { std::mem::zeroed() };
 
     // Basic E820 memory map (1 RAM region covering all RAM).
     boot_params.e820_entries = 1;
     boot_params.e820_table[0] = BootE820Entry {
         addr: 0,
         size: MEM_SIZE,
-        type_: E820Type::Ram as u32,
+        typ: E820Type::Ram as u32,
     };
 
-    let kernel = BzImage::new();
-    kernel.load(
+    // Load kernel into guest memory.
+    BzImage::load(
         &mem,
-        GuestAddress(KERNEL_LOAD_ADDR),
+        Some(GuestAddress(KERNEL_LOAD_ADDR)),
         &mut kernel_file,
         Some(&mut boot_params),
     )?;
@@ -61,7 +61,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     cmdline.insert_str("console=ttyS0 root=/dev/vda1 rw i8042.nokbd reboot=t panic=1")?;
     load_cmdline(&mem, GuestAddress(CMDLINE_ADDR), &cmdline)?;
     boot_params.hdr.cmd_line_ptr = CMDLINE_ADDR as u32;
-    boot_params.hdr.cmdline_size = cmdline.as_cstring().to_bytes_with_nul().len() as u32;
+    boot_params.hdr.cmdline_size = cmdline.as_cstring()?.to_bytes_with_nul().len() as u32;
 
     // Write boot params (zero page).
     mem.write_obj(boot_params, GuestAddress(BOOT_PARAMS_ADDR))?;
