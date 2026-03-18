@@ -12,6 +12,7 @@ linux-loader = { path = "third_party/linux-loader" }
 kvm-ioctls = { path = "third_party/kvm-ioctls" }
 vm-memory = { path = "third_party/vm-memory" }
 vmm-sys-util = { path = "vendor/vmm-sys-util" }
+kvm-bindings = { git = "https://github.com/rust-vmm/kvm-bindings.git", tag = "v0.5.0" }
 
 [patch."https://github.com/rust-vmm/vm-virtio.git"]
 vm-memory = { path = "third_party/vm-memory" }
