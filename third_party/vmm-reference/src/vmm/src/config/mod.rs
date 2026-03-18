@@ -272,6 +272,72 @@ pub struct VMMConfig {
     pub block_config: Option<BlockConfig>,
 }
 
+impl Clone for KernelConfig {
+    fn clone(&self) -> Self {
+        let mut cmdline = Cmdline::new(KERNEL_CMDLINE_CAPACITY);
+        cmdline
+            .insert_str(self.cmdline.as_str())
+            .expect("Kernel cmdline exceeds capacity");
+        KernelConfig {
+            cmdline,
+            path: self.path.clone(),
+            load_addr: self.load_addr,
+        }
+    }
+}
+
+impl PartialEq for KernelConfig {
+    fn eq(&self, other: &Self) -> bool {
+        self.cmdline.as_str() == other.cmdline.as_str()
+            && self.path == other.path
+            && self.load_addr == other.load_addr
+    }
+}
+
+impl fmt::Debug for KernelConfig {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("KernelConfig")
+            .field("cmdline", &self.cmdline.as_str())
+            .field("path", &self.path)
+            .field("load_addr", &self.load_addr)
+            .finish()
+    }
+}
+
+impl Clone for VMMConfig {
+    fn clone(&self) -> Self {
+        VMMConfig {
+            memory_config: self.memory_config.clone(),
+            vcpu_config: self.vcpu_config.clone(),
+            kernel_config: self.kernel_config.clone(),
+            net_config: self.net_config.clone(),
+            block_config: self.block_config.clone(),
+        }
+    }
+}
+
+impl PartialEq for VMMConfig {
+    fn eq(&self, other: &Self) -> bool {
+        self.memory_config == other.memory_config
+            && self.vcpu_config == other.vcpu_config
+            && self.kernel_config == other.kernel_config
+            && self.net_config == other.net_config
+            && self.block_config == other.block_config
+    }
+}
+
+impl fmt::Debug for VMMConfig {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("VMMConfig")
+            .field("memory_config", &self.memory_config)
+            .field("vcpu_config", &self.vcpu_config)
+            .field("kernel_config", &self.kernel_config)
+            .field("net_config", &self.net_config)
+            .field("block_config", &self.block_config)
+            .finish()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
