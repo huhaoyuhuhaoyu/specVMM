@@ -134,7 +134,6 @@ impl TryFrom<&str> for VcpuConfig {
 }
 
 /// Guest kernel configurations.
-#[derive(Clone, Debug, PartialEq)]
 pub struct KernelConfig {
     /// Kernel command line.
     pub cmdline: Cmdline,
@@ -259,7 +258,7 @@ impl TryFrom<&str> for BlockConfig {
 }
 
 /// VMM configuration.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Default)]
 pub struct VMMConfig {
     /// Guest memory configuration.
     pub memory_config: MemoryConfig,
