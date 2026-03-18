@@ -11,3 +11,7 @@ linux-loader = { path = "vendor/linux-loader" }
 kvm-ioctls = { path = "vendor/kvm-ioctls" }
 vm-memory = { path = "vendor/vm-memory" }
 vmm-sys-util = { path = "vendor/vmm-sys-util" }
+
+[patch."https://github.com/rust-vmm/vm-virtio.git"]
+vm-memory = { path = "vendor/vm-memory" }
+vmm-sys-util = { path = "vendor/vmm-sys-util" }
