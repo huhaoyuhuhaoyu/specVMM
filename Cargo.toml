@@ -8,7 +8,7 @@ vmm = { path = "third_party/vmm-reference/src/vmm" }
 
 [patch.crates-io]
 event-manager = { path = "third_party/event-manager" }
-linux-loader = { path = "vendor/linux-loader" }
+linux-loader = { path = "third_party/linux-loader" }
 kvm-ioctls = { path = "third_party/kvm-ioctls" }
 vm-memory = { path = "third_party/vm-memory" }
 vmm-sys-util = { path = "vendor/vmm-sys-util" }
