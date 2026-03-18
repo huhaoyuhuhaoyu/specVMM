@@ -1,11 +1,11 @@
 use kvm_bindings::{kvm_segment, kvm_userspace_memory_region};
 use kvm_ioctls::{Kvm, VcpuExit};
-use linux_boot_params::boot_params::{boot_e820_entry, BootParams};
+use linux_boot_params::{BootE820Entry, BootParams, E820Type};
 use linux_loader::loader::bzimage::BzImage;
 use linux_loader::loader::{load_cmdline, Cmdline, KernelLoader};
 use std::fs::File;
 use std::io::{self, Write};
-use vm_memory::{Bytes, GuestAddress, GuestMemoryBackend, GuestMemoryMmap};
+use vm_memory::{Bytes, GuestAddress, GuestMemory, GuestMemoryMmap};
 
 const KERNEL_PATH: &str = "/home/tonywei/hhy/util/specVMM/linux/arch/x86/boot/bzImage";
 const DISK_PATH: &str = "/home/tonywei/hhy/util/specVMM/disk.raw";
@@ -42,21 +42,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Basic E820 memory map (1 RAM region covering all RAM).
     boot_params.e820_entries = 1;
-    boot_params.e820_table[0] = boot_e820_entry {
+    boot_params.e820_table[0] = BootE820Entry {
         addr: 0,
         size: MEM_SIZE,
-        type_: 1,
+        type_: E820Type::Ram as u32,
     };
 
     let kernel = BzImage::new();
-    kernel.load(&mem, GuestAddress(KERNEL_LOAD_ADDR), &mut kernel_file, Some(&mut boot_params))?;
+    kernel.load(
+        &mem,
+        GuestAddress(KERNEL_LOAD_ADDR),
+        &mut kernel_file,
+        Some(&mut boot_params),
+    )?;
 
     // Kernel command line.
     let mut cmdline = Cmdline::new(4096)?;
     cmdline.insert_str("console=ttyS0 root=/dev/vda1 rw i8042.nokbd reboot=t panic=1")?;
     load_cmdline(&mem, GuestAddress(CMDLINE_ADDR), &cmdline)?;
     boot_params.hdr.cmd_line_ptr = CMDLINE_ADDR as u32;
-    boot_params.hdr.cmdline_size = cmdline.as_str().len() as u32;
+    boot_params.hdr.cmdline_size = cmdline.as_cstring().to_bytes_with_nul().len() as u32;
 
     // Write boot params (zero page).
     mem.write_obj(boot_params, GuestAddress(BOOT_PARAMS_ADDR))?;
