@@ -18,11 +18,11 @@ elf = []
 pe = []
 
 [dependencies]
-vm-memory = ">=0.6.0"
+vm-memory = { path = "../vm-memory" }
 
 [dev-dependencies]
 criterion = "0.3.5"
-vm-memory = { version = ">=0.6.0", features = ["backend-mmap"] }
+vm-memory = { path = "../vm-memory", features = ["backend-mmap"] }
 
 [[bench]]
 name = "main"
@@ -34,3 +34,4 @@ bench = false # https://bheisler.github.io/criterion.rs/book/faq.html#cargo-benc
 [profile.bench]
 lto = true
 codegen-units = 1
+
