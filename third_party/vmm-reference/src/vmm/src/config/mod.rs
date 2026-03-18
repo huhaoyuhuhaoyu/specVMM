@@ -180,6 +180,8 @@ impl TryFrom<&str> for KernelConfig {
             .map_err(ConversionError::new_kernel)?
             .unwrap_or_else(|| DEFAULT_KERNEL_CMDLINE.to_string());
 
+        let cmdline_str = cmdline_str.trim_matches('"');
+
         let mut cmdline = Cmdline::new(KERNEL_CMDLINE_CAPACITY);
         cmdline
             .insert_str(cmdline_str)
