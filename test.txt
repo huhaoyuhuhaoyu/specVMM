@@ -1,1 +1,25 @@
-cargo update -p vmm-sys-util --precise 0.8.0
+cd /home/tonywei/hhy/util/specVMM/linux
+
+# 先检查是否缺失
+grep -E "VIRTIO_MMIO|VIRTIO_BLK|EXT4_FS|PARTITION|EFI_PARTITION" .config
+
+# 启用缺失项（建议全部执行）
+./scripts/config --enable VIRTIO_MMIO
+./scripts/config --enable VIRTIO
+./scripts/config --enable VIRTIO_BLK
+./scripts/config --enable EXT4_FS
+./scripts/config --enable PARTITION_ADVANCED
+./scripts/config --enable EFI_PARTITION
+./scripts/config --enable MSDOS_PARTITION
+
+# 让配置生效并编译
+make olddefconfig
+make -j"$(nproc)" bzImage
+
+
+
+cd /home/tonywei/hhy/util/specVMM/linux
+
+./scripts/config --enable VIRTIO_MMIO_CMDLINE_DEVICES
+make olddefconfig
+make -j"$(nproc)" bzImage

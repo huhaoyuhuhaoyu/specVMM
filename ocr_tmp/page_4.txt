@@ -1,0 +1,41 @@
+多 租户 场景 ， 租 户 间 数据 污染
+在 虚拟 化 多 租户 场景 中 ， 物 理 资源 共享 特性 使 数据 异常 存在 横向 扩散 风险 : 比如 庶 拟 机 逃逸 攻击 ，
+
+恶意 虚拟 机 通过 利用 Hypervisor 漏 洞 突破 隔离 边界 ， 可 能 访问 其 他 租户 的 敏感 数据 或 控制 系统 资源 ，
+
+现 有 相关 工作
+
+By
+九 。
+
+在 数据 中 心虚 拟 化 技术 的 数据 安全 防护 领域 ， 学 术 界 针对 虚拟 机 运行 正确 性 问题 开展 了 系统 性 研
+当前 主流 技术 路 线 包 括 基 于 多 机 仲裁 的 元 余 执行 机 制 、 多 Hypervisor 协 同 验证 架构 、hypervisor 和 硬
+
+件 交 叉 验 证 以 及 核心 功能 形式 化 验证 方法 。 然 而 在 实际 生产 环境 中 ， 这 方案 面临 以 下 关键 挑战 :
+
+高 开销 : 传统 仲裁 机 制 需 在 亚 微 秒 级 的 Hypervisor 处 理 流 程 中 嵌入 多 重 验证 逻辑 ， 导 致 虚拟 机 开销
+急剧 增加 ， 严 重 制约 了 云 平台 的 资源 吞吐 效率 ;
+低 可 靠 性 : 多 Hypervisor 协 同 验证 架构 ， 只 是 模拟 硬件 领域 的 验证 ， 无 法 保证 与 真实 硬件 能 力 持平
+o Testing system virtual machines
+o Path-Exploration Lifting: Hi-Fi Tests for Lo-Fi Emulators
+缺乏 主流 x86 CPU 支持 : EXAMINER (ASPLOS 2023) 基于 CPU spec 和 fuzzer 来 自动 生成 指令 ，
+并 在 hypervisor 和 硬件 上 进行 对 比 ， 然 而 该 方式 只 支持 ARM 平 台 CPU 验 证
+o EXAMINER: automatically locating inconsistent instructions between real devices and
+CPU emulators for ARM [ASPLOS‘23]
+低 效 率 : 形式 化 验证 体系 的 研发 周期 长 ， 与 云 平台 更 新 运 代 的 版 本 演进 节奏 存在 显著 脱节 ， 难 以 满
+足 敏 捷 开 发 需求 ，spoq (OSDI 2023) 和 tpot (SOSP2024) 通过 半自动 /自动 的 方式 来 降低 形式 化
+验证 的 门槛 ， 但 是 开发 人 员 还 是 存在 极 大 的 学 习 成 本 和 验证 成 本
+o Spoq: Scaling Machine-Checkable Systems Verification in Coq [OSDI2023]
+o Practical Verification of System-Software Components Written in Standard C
+{SOSP2024]
+
+缺乏 运行 时 验证 : 现 有 工作 由 于 高 开销 和 低 效率 的 原因 ， 着 重 于 线 下 方式 的 验证 ， 不 支持 运行 时 验
+证
+
+方案 预 研
+
+研究 命题
+
+在 生产 环境 中 大 规模 部 署 的 虚拟 化 数据 正确 验证 系统
+
+发 现 与 突破 点
