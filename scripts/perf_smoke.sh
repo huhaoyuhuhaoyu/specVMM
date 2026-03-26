@@ -9,10 +9,9 @@ set -euo pipefail
 # Requires:
 #   RUSTVMM_KERNEL, RUSTVMM_DISK, RUSTVMM_SEED
 
-if [[ -z "${RUSTVMM_KERNEL:-}" || -z "${RUSTVMM_DISK:-}" ]]; then
-  echo "Missing env vars. Set RUSTVMM_KERNEL and RUSTVMM_DISK (and optionally RUSTVMM_SEED)."
-  exit 1
-fi
+export RUSTVMM_KERNEL=/home/tonywei/hhy/util/specVMM/linux/arch/x86/boot/bzImage
+export RUSTVMM_DISK=/home/tonywei/hhy/util/specVMM/disk.raw
+export RUSTVMM_SEED=/home/tonywei/hhy/util/specVMM/seed.iso
 
 if [[ ! -e "${RUSTVMM_KERNEL}" ]]; then
   echo "Kernel not found: ${RUSTVMM_KERNEL}"
